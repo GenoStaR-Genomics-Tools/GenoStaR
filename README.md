@@ -35,4 +35,5 @@ Alex Coulter, Arun Tiwari, Clement Zai
 # References
 M. Whirl-Carrillo1, R. Huddart1, L. Gong, K. Sangkuhl, C.F. Thorn, R. Whaley and T.E. Klein. "An evidence-based framework for evaluating pharmacogenomics knowledge for personalized medicine" Clinical Pharmacology & Therapeutics (2021) Sep;110(3):563-572. doi: 10.1002/cpt.2350. Epub 2021 Jul 22.
 
+K. Sangkuhl, M. Whirl-Carrillo, et al. "Pharmacogenomics Clinical Annotation Tool (PharmCAT)" Clinical Pharmacology & Therapeutics (2020) Jan;107(1):203-210.
 

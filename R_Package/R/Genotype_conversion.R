@@ -1252,22 +1252,20 @@ star_to_activity <- function(df, gene) {
     for (i in 1:nrow(df)) {
       diplotype_col <- paste0(gene, "_diplotype")
       diplotype <- df[i, diplotype_col]
-      #check if diplotype present 
+      
       if (diplotype == " " || is.na(diplotype) || is.null(diplotype)) {
         activity_score1_list[[i]] <- "Diplotype input missing"
         activity_score2_list[[i]] <- "Diplotype input missing"
         duplication_list[[i]] <- "No"
         comment_list[[i]] <- NA
       } else {
-        #determine if duplication is present to determine activity score
         cnv_x9_col <- grep("CNVx9", colnames(df), value = TRUE)
-   
-        if (length(cnv_x9_col) == 0) { #if no exon 9 column found, look for general cnv column
+        if (length(cnv_x9_col) == 0) {
           cnv_x9_col <- grep("CNV", colnames(df), value = TRUE)
-        } 
-        if(length(cnv_x9_col)==0){ #if still no cnv information, assume normal amount of copies
-          cnv_x9 <- 2 
-        }else {
+        }
+        if (length(cnv_x9_col) == 0) {
+          cnv_x9 <- 2
+        } else {
           cnv_x9_value <- df[i, cnv_x9_col]
           cnv_x9 <- ifelse(is.na(cnv_x9_value), 2, as.numeric(strsplit(cnv_x9_value, " ")[[1]][1]))
         }
@@ -1276,18 +1274,36 @@ star_to_activity <- function(df, gene) {
         duplication_list[[i]] <- duplication_status
         
         alleles <- strsplit(diplotype, "/")[[1]]
-        #for specific star alleles that impact activity score check if they are present 
-        if (any(alleles %in% c("*36", "*5", "*13", "*68"))) {
-          total_score <- sum(sapply(alleles, function(allele) {
+        
+        # Check if one of the alleles is in the form *X+*Y (e.g., *36+*10)
+        plus_alleles <- grepl("\\+", alleles)
+        
+        if (any(plus_alleles)) {
+          # Expand the *36+*10 into separate alleles
+          expanded_alleles <- unlist(strsplit(alleles[plus_alleles], "\\+"))
+          # Combine expanded alleles with the other non-plus allele
+          all_alleles <- c(alleles[!plus_alleles], expanded_alleles)
+          
+          # Get activity scores for all alleles
+          all_scores <- sapply(all_alleles, function(allele) {
             row_index <- which(data[, 1] == allele)
             if (length(row_index) == 0) {
               return(NA)
             }
             as.numeric(data[row_index, 2])
-          }))
-          activity_score1_list[[i]] <- total_score
-          activity_score2_list[[i]] <- ifelse(duplication_status == "Yes", NA, NA)
+          })
+          
+          if (any(is.na(all_scores))) {
+            activity_score1_list[[i]] <- "Allele not found"
+            activity_score2_list[[i]] <- "Allele not found"
+          } else {
+            # Sum all scores regardless of CNV (because we already expanded the duplication)
+            total_score <- sum(all_scores)
+            activity_score1_list[[i]] <- total_score
+            activity_score2_list[[i]] <- NA  # Usually, 3-allele diplotypes don't need a second AS
+          }
         } else {
+          # Handle standard diplotype (2 alleles)
           allele1 <- alleles[1]
           allele2 <- alleles[2]
           
@@ -1300,14 +1316,15 @@ star_to_activity <- function(df, gene) {
           } else {
             score1 <- as.numeric(data[row_index1, 2])
             score2 <- as.numeric(data[row_index2, 2])
-            #get activity score based on the value of exon 9 for duplication information, create two scores as can't tell which allele is duplicated
+            
             if (!is.na(cnv_x9) && cnv_x9 != 2) {
-              activity_score1 <- score1 * (cnv_x9 -1) + score2
-              activity_score2 <- score2 * (cnv_x9 -1) + score1
+              activity_score1 <- score1 * (cnv_x9 - 1) + score2
+              activity_score2 <- score2 * (cnv_x9 - 1) + score1
             } else {
               activity_score1 <- score1 + score2
               activity_score2 <- NA
             }
+            
             activity_score1_list[[i]] <- activity_score1
             activity_score2_list[[i]] <- ifelse(duplication_status == "Yes", activity_score2, NA)
           }
@@ -1316,7 +1333,8 @@ star_to_activity <- function(df, gene) {
       }
     }
     df$CYP2D6_Duplication <- unlist(duplication_list)
-  } else {
+  }
+else {
     # For genes other than CYP2D6, handle activity score 1 only
     for (i in 1:nrow(df)) {
       diplotype_col <- paste0(gene, "_diplotype")
@@ -1366,7 +1384,6 @@ star_to_activity <- function(df, gene) {
 #' @export
 star_to_pheno <- function(df, gene) {
   gene <- toupper(gene)
-  
   # Check if the dataframe is empty
   if (nrow(df) == 0) {
     warning("The dataframe is empty. No processing will be done.")

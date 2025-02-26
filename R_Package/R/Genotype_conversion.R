@@ -1541,6 +1541,7 @@ generate_phased_combinations <- function(snp_df, snp_cols) {
 #' @description Checks if genotypes contain a space between the alleles, if not, adds one (i.e AA to A A)
 #' @param genotype the genotype from the current column and row
 #' @return the newly formatted genotype 
+#' @export
 format_genotype <- function(genotype) {
   if (length(genotype) > 1) {
     stop("Unexpected vector input in format_genotype: ", paste(genotype, collapse = ", "))
@@ -1571,6 +1572,46 @@ format_genotype <- function(genotype) {
   # If already formatted or cannot be split evenly, return as-is
   return(genotype)
 }
+
+#' @title Assigns more common cyp2d6 diplotype if tie in scoring
+#' @description The function will check the diplotype and alternate diplotype call and ascertain the more likely diplotype.
+#' @param df The dataframe that contains the patientID, the genotypes, and the diplotypes from assign_diplotype()
+#' @return A dataframe with updated diplotype calls
+#' @examples 
+#' result <- adjust_diplotype(df)
+#' 
+#' @export
+adjust_diplotype <- function(final_results) {
+  # Define the pairs of diplotype replacements
+  replace_pairs <- list(
+    "*10/*4" = c("*1/*4", "*2/*4"),
+    "*1/*3"  = c("*2/*3", "*10/*3"),
+    "*1/*6"  = c("*2/*6", "*10/*6"),
+    "*1/*9"  = c("*2/*9", "*10/*9"),
+    "*1/*7"  = "*2/*7"
+  )
+  
+  # Loop through the pairs and apply replacements
+  for (d in names(replace_pairs)) {
+    for (a in replace_pairs[[d]]) {
+      # Identify rows where CYP2D6_diplotype and CYP2D6_alternate_diplotype match
+      idx <- with(final_results, CYP2D6_diplotype == d & CYP2D6_alternate_diplotype == a)
+      # Swap the diplotype and set alternate_diplotype to NA
+      final_results$CYP2D6_diplotype[idx] <- a
+      final_results$CYP2D6_alternate_diplotype[idx] <- NA
+    }
+  }
+  
+  # Additional condition: If diplotype is *1/*4 and alternate is *10/*4, set alternate to NA
+  idx_alt <- with(final_results, (CYP2D6_diplotype == "*1/*4" | CYP2D6_diplotype == "*2/*4") & CYP2D6_alternate_diplotype == "*10/*4")
+  final_results$CYP2D6_alternate_diplotype[idx_alt] <- NA
+  
+  idx_alt <- with(final_results, (CYP2D6_diplotype == "*10/*14") & CYP2D6_alternate_diplotype == "*14/*2")
+  final_results$CYP2D6_alternate_diplotype[idx_alt] <- NA
+  
+  return(final_results)
+}
+
 
 #' @title Assigns Star Allele Values, phased and unphased approach 
 #' @description The function will first try to assign star alleles using a phased approach, any genotypes left without a matching diplotype will then undergo an unphased approach for assigning diplotypes.
@@ -1748,6 +1789,17 @@ assign_diplotype <- function(df, genes, phased = FALSE, CYP1A2_name = "new") {
 
   # Convert list columns to character strings before returning
   final_results <- convert_list_to_string(final_results)
+  for(gene in genes){
+    if(gene == "CYP2D6"){
+      #adjust the potential alternate diplotypes 
+      final_results <- adjust_diplotype(final_results)
+      #check again if alternate diplotype column is all NA, if yes then remove it
+      if (all(sapply(final_results[["CYP2D6_alternate_diplotype"]], function(x) is.null(x) || is.na(x)))) {
+        final_results[["CYP2D6_alternate_diplotype"]] <- NULL
+      }
+    }
+  }
+
   return(list(final_results, missing_geno))
 }
 

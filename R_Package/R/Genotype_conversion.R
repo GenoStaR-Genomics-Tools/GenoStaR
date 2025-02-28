@@ -1306,7 +1306,7 @@ star_to_activity <- function(df, gene) {
           # Handle standard diplotype (2 alleles)
           allele1 <- alleles[1]
           allele2 <- alleles[2]
-          
+  
           row_index1 <- which(data[, 1] == allele1)
           row_index2 <- which(data[, 1] == allele2)
           
@@ -1316,8 +1316,8 @@ star_to_activity <- function(df, gene) {
           } else {
             score1 <- as.numeric(data[row_index1, 2])
             score2 <- as.numeric(data[row_index2, 2])
-            
-            if (!is.na(cnv_x9) && cnv_x9 != 2) {
+    
+            if (!is.na(cnv_x9) && cnv_x9 > 2) { 
               activity_score1 <- score1 * (cnv_x9 - 1) + score2
               activity_score2 <- score2 * (cnv_x9 - 1) + score1
             } else {
@@ -1353,7 +1353,7 @@ else {
         if (length(row_index) == 0) {  
           activity_score1_list[[i]] <- "Diplotype not found"
         } else {  
-          score <- as.numeric(data[row_index, 2])
+          score <- as.numeric(data[row_index, 2]) 
           activity_score1_list[[i]] <- score
         }
         comment_list[[i]] <- ""
@@ -1792,10 +1792,12 @@ assign_diplotype <- function(df, genes, phased = FALSE, CYP1A2_name = "new") {
   for(gene in genes){
     if(gene == "CYP2D6"){
       #adjust the potential alternate diplotypes 
-      final_results <- adjust_diplotype(final_results)
-      #check again if alternate diplotype column is all NA, if yes then remove it
-      if (all(sapply(final_results[["CYP2D6_alternate_diplotype"]], function(x) is.null(x) || is.na(x)))) {
-        final_results[["CYP2D6_alternate_diplotype"]] <- NULL
+      if("CYP2D6_alternate_diplotype" %in% colnames(final_results)){
+        final_results <- adjust_diplotype(final_results)
+        #check again if alternate diplotype column is all NA, if yes then remove it
+        if (all(sapply(final_results[["CYP2D6_alternate_diplotype"]], function(x) is.null(x) || is.na(x)))) {
+          final_results[["CYP2D6_alternate_diplotype"]] <- NULL
+        }
       }
     }
   }

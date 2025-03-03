@@ -34,6 +34,7 @@ find_missing_data <- function(df) {
 #' data_filled <- fill_empty_cells(data_filtered)
 #' @export
 fill_empty_cells <- function(df) {
+
   for (i in seq_along(df)) {
     df[, i][df[, i] == ""] <- df[1, i]
   }
@@ -233,20 +234,20 @@ process_cyp2d6 <- function(genotypes, row_idx, diplotypes, cnv_x9, cnv_int6, cnv
         genotype_match <- TRUE
         points <- 70
       }
+      
+      #Check for *2 star allele
+      else if ("CYP2D6_rs16947" %in% rownames(genotypes) && "A" %in% genotypes["CYP2D6_rs16947", i] &&
+               "CYP2D6_rs1135840" %in% rownames(genotypes) && "G" %in% genotypes["CYP2D6_rs1135840", i]) {
+        star_allele <- "*2"
+        genotype_match <- TRUE
+        points <- 40 
+      }
       #Check for *10 
       else if("CYP2D6_rs1065852" %in% rownames(genotypes) && "A" %in% genotypes["CYP2D6_rs1065852", i] && 
               "CYP2D6_rs1135840" %in% rownames(genotypes) && "G" %in% genotypes["CYP2D6_rs1135840", i] && 
               "CYP2D6_rs16947" %in% rownames(genotypes) && !"A" %in% genotypes["CYP2D6_rs16947", i] && 
               "CYP2D6_rs3892097" %in% rownames(genotypes) && !"T" %in% genotypes["CYP2D6_rs3892097", i]){
         star_allele  <- "*10"
-        genotype_match <- TRUE
-        points <- 40 
-      }
-      
-      #Check for *2 star allele
-      else if ("CYP2D6_rs16947" %in% rownames(genotypes) && "A" %in% genotypes["CYP2D6_rs16947", i] &&
-               "CYP2D6_rs1135840" %in% rownames(genotypes) && "G" %in% genotypes["CYP2D6_rs1135840", i]) {
-        star_allele <- "*2"
         genotype_match <- TRUE
         points <- 40 
       }
@@ -897,20 +898,23 @@ find_diplotype <- function(df, genes, CYP1A2_name){
       
       # Filter the input dataframe columns to include only those relevant to the current gene
       gene_snps <- grep(paste0("^", gene, "_"), colnames(df), value = TRUE)
+    
       # Extract the rs part from the input column names
       snps_clean <- gsub(".*_X?(rs[0-9]+|X[0-9A-Z]+)", "\\1", gene_snps)
-      
+
       # Extract base SNP names from snps_clean
       base_snps <- ifelse(grepl("^X[0-9]+[A-Z]+$", snps_clean), snps_clean, gsub("[A-Z]$", "", snps_clean))
-      
+
       # Match base SNPs with columns in the allele definition data
       matching_snps <- intersect(base_snps, colnames(data))
+
       # Filter out SNPs not found in the allele definition data
       valid_snps_clean <- snps_clean[base_snps %in% matching_snps]
       # Filter df_gene to only contain SNPs in valid_snps_clean with the gene prefix
       #Avoids processing genes that are not present in allele definition data
       valid_gene_snps <- gene_snps[snps_clean %in% valid_snps_clean]
       df_gene <- df[, valid_gene_snps, drop = FALSE]
+
       # Ensure there are matching SNPs before proceeding
       if (length(valid_snps_clean) > 0) {
         #Create a new data_filtered dataframe
@@ -922,7 +926,11 @@ find_diplotype <- function(df, genes, CYP1A2_name){
           
           # Add the corresponding column from data to data_filtered
           if (nrow(data_filtered) == 0) {
-            data_filtered <- data.frame(data[[base_snp]], stringsAsFactors = FALSE)
+            if (length(matching_snps) == 1) { #in the case where there's only one column, explicitly keep as dataframe
+              data_filtered <- data.frame(data[[base_snp]], drop = FALSE, stringsAsFactors = FALSE)
+            } else {
+              data_filtered <- data.frame(data[[base_snp]], stringsAsFactors = FALSE)
+            }
             colnames(data_filtered) <- snp  # Name it according to valid_snps_clean
           } else {
             data_filtered[[snp]] <- data[[base_snp]]
@@ -947,7 +955,7 @@ find_diplotype <- function(df, genes, CYP1A2_name){
  
          #Map back to original star alleles
          filtered_star_alleles <- star_alleles[row_indices]
-         
+       
          #fill the empty cells with reference genotype
          data_filled <- fill_empty_cells(data_filtered)
    
@@ -1091,10 +1099,6 @@ find_diplotype <- function(df, genes, CYP1A2_name){
                 diplotype <- "*1/*6"
                 total_score <- 50
               }
-              # if(gene == "CYP2D6" && (diplotype == "*4/*10" | diplotype == "*10/*4")){
-              #   diplotype <- "*1/*4"
-              #   total_score <- 50
-              # }
               
               #Check for specific CYP2D6 star alleles given CNV information 
               if(gene == "CYP2D6"){
@@ -1582,36 +1586,78 @@ format_genotype <- function(genotype) {
 #' 
 #' @export
 adjust_diplotype <- function(final_results) {
-  # Define the pairs of diplotype replacements
-  replace_pairs <- list(
-    "*10/*4" = c("*1/*4", "*2/*4"),
-    "*1/*3"  = c("*2/*3", "*10/*3"),
-    "*1/*6"  = c("*2/*6", "*10/*6"),
-    "*1/*9"  = c("*2/*9", "*10/*9"),
-    "*1/*7"  = "*2/*7"
-  )
-  
-  # Loop through the pairs and apply replacements
-  for (d in names(replace_pairs)) {
-    for (a in replace_pairs[[d]]) {
-      # Identify rows where CYP2D6_diplotype and CYP2D6_alternate_diplotype match
-      idx <- with(final_results, CYP2D6_diplotype == d & CYP2D6_alternate_diplotype == a)
-      # Swap the diplotype and set alternate_diplotype to NA
-      final_results$CYP2D6_diplotype[idx] <- a
-      final_results$CYP2D6_alternate_diplotype[idx] <- NA
+  if("CYP2D6_alternate_diplotype" %in% colnames(final_results)){
+    # Define the pairs of diplotype replacements
+    replace_pairs <- list(
+      "*10/*4" = c("*1/*4", "*2/*4"),
+      "*1/*3"  = c("*2/*3", "*10/*3"),
+      "*1/*6"  = c("*2/*6", "*10/*6"),
+      "*1/*9"  = c("*2/*9", "*10/*9"),
+      "*1/*7"  = "*2/*7",
+      "*10/*68+*4" = "*2/*68+*4"
+    )
+    
+    # Loop through the pairs and apply replacements
+    for (d in names(replace_pairs)) {
+      for (a in replace_pairs[[d]]) {
+        # Identify rows where CYP2D6_diplotype and CYP2D6_alternate_diplotype match
+        idx <- with(final_results, CYP2D6_diplotype == d & CYP2D6_alternate_diplotype == a)
+        # Swap the diplotype and set alternate_diplotype to NA
+        final_results$CYP2D6_diplotype[idx] <- a
+        final_results$CYP2D6_alternate_diplotype[idx] <- NA
+      }
     }
+    
+    # Additional condition: If diplotype is *1/*4 and alternate is *10/*4, set alternate to NA
+    idx_alt <- with(final_results, (CYP2D6_diplotype == "*1/*4" | CYP2D6_diplotype == "*2/*4") & CYP2D6_alternate_diplotype == "*10/*4")
+    final_results$CYP2D6_alternate_diplotype[idx_alt] <- NA
+    
+    idx_alt <- with(final_results, (CYP2D6_diplotype == "*10/*14") & CYP2D6_alternate_diplotype == "*14/*2")
+    final_results$CYP2D6_alternate_diplotype[idx_alt] <- NA
   }
-  
-  # Additional condition: If diplotype is *1/*4 and alternate is *10/*4, set alternate to NA
-  idx_alt <- with(final_results, (CYP2D6_diplotype == "*1/*4" | CYP2D6_diplotype == "*2/*4") & CYP2D6_alternate_diplotype == "*10/*4")
-  final_results$CYP2D6_alternate_diplotype[idx_alt] <- NA
-  
-  idx_alt <- with(final_results, (CYP2D6_diplotype == "*10/*14") & CYP2D6_alternate_diplotype == "*14/*2")
-  final_results$CYP2D6_alternate_diplotype[idx_alt] <- NA
-  
+
+  idx_10_4 <- with(final_results, (CYP2D6_diplotype == "*10/*4" | CYP2D6_diplotype == "*4/*10"))
+  final_results$CYP2D6_diplotype[idx_10_4] <- "*1/*4"
+
   return(final_results)
 }
 
+#' @title Reorder diplotypes
+#' @description The function will reorder the diplotypes to make sure the format is small number/big number
+#' @param diplotype The current diplotype to check 
+#' @return A reformatted diplotype 
+#' @export
+reorder_diplotype <- function(diplotype) {
+  # Function to handle alleles with '+'
+  handle_plus_allele <- function(allele) {
+    if (grepl("\\+", allele)) {
+      parts <- strsplit(allele, "\\+")[[1]]
+      # Sort parts based on numeric value, extracting the numeric part
+      sorted_parts <- sort(parts, method = "radix", decreasing = TRUE)
+      return(paste(sorted_parts, collapse = "+"))
+    }
+    return(allele)
+  }
+  
+  # Split the diplotype on '/'
+  alleles <- strsplit(diplotype, "/")[[1]]
+  
+  # Handle '+' and sort alleles numerically based on the numeric part
+  sorted_alleles <- lapply(alleles, function(x) {
+    # Extract numeric part and the allele (e.g., *4, *1)
+    numeric_part <- as.numeric(gsub("\\D", "", x))  # Extract numeric part
+    return(list(allele = x, numeric_part = numeric_part))  # Return both allele and numeric part
+  })
+  
+  # Sort the alleles based on the numeric part
+  sorted_alleles <- sorted_alleles[order(sapply(sorted_alleles, function(x) x$numeric_part))]
+  
+  # Reassemble the sorted alleles
+  sorted_alleles <- sapply(sorted_alleles, function(x) x$allele)
+  
+  # Return the reordered diplotype
+  paste(sorted_alleles, collapse = "/")
+}
 
 #' @title Assigns Star Allele Values, phased and unphased approach 
 #' @description The function will first try to assign star alleles using a phased approach, any genotypes left without a matching diplotype will then undergo an unphased approach for assigning diplotypes.
@@ -1792,8 +1838,11 @@ assign_diplotype <- function(df, genes, phased = FALSE, CYP1A2_name = "new") {
   for(gene in genes){
     if(gene == "CYP2D6"){
       #adjust the potential alternate diplotypes 
-      if("CYP2D6_alternate_diplotype" %in% colnames(final_results)){
+      if("CYP2D6_alternate_diplotype" %in% colnames(final_results) || 
+         ("CYP2D6_diplotype" %in% colnames(final_results) && 
+          any(final_results$CYP2D6_diplotype %in% c("*10/*4", "*4/*10")))){
         final_results <- adjust_diplotype(final_results)
+   
         #check again if alternate diplotype column is all NA, if yes then remove it
         if (all(sapply(final_results[["CYP2D6_alternate_diplotype"]], function(x) is.null(x) || is.na(x)))) {
           final_results[["CYP2D6_alternate_diplotype"]] <- NULL
@@ -1801,6 +1850,19 @@ assign_diplotype <- function(df, genes, phased = FALSE, CYP1A2_name = "new") {
       }
     }
   }
+
+  #reorder diplotypes so smallest number is first
+  # Identify diplotype columns (columns containing "diplotype" in the name)
+  diplotype_cols <- grep("diplotype", colnames(final_results), value = TRUE)
+ 
+  # Apply the reordering function to all diplotype columns
+  #final_results[diplotype_cols] <- lapply(final_results[diplotype_cols], reorder_diplotype)
+  final_results[diplotype_cols] <- lapply(final_results[diplotype_cols], function(x) {
+    # Convert to character if the column is factor
+    x <- as.character(x)
+    # Apply the reorder_diplotype function to each element
+    sapply(x, reorder_diplotype)
+  })
 
   return(list(final_results, missing_geno))
 }

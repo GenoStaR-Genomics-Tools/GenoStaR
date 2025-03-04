@@ -1616,8 +1616,23 @@ adjust_diplotype <- function(final_results) {
     final_results$CYP2D6_alternate_diplotype[idx_alt] <- NA
   }
 
-  idx_10_4 <- with(final_results, (CYP2D6_diplotype == "*10/*4" | CYP2D6_diplotype == "*4/*10"))
-  final_results$CYP2D6_diplotype[idx_10_4] <- "*1/*4"
+  # Explicit checks for *4 and *10 assignments only if the diplotype is *10/*4 or *4/*10
+  if("CYP2D6_rs1065852" %in% colnames(final_results) & "CYP2D6_rs3892097" %in% colnames(final_results)) {
+    for (i in seq_len(nrow(final_results))) {
+      if (final_results$CYP2D6_diplotype[i] %in% c("*10/*4", "*4/*10")) {
+        rs1065852 <- final_results$CYP2D6_rs1065852[i]
+        rs3892097 <- final_results$CYP2D6_rs3892097[i]
+        
+        if ((rs1065852 %in% c("AG", "GA")) & (rs3892097 %in% c("CT", "TC"))) {
+          final_results$CYP2D6_diplotype[i] <- "*1/*4"
+        } else if (rs1065852 == "AA" & (rs3892097 %in% c("CT", "TC"))) {
+          final_results$CYP2D6_diplotype[i] <- "*4/*10"
+        } else if (rs1065852 == "AA" & rs3892097 == "TT") {
+          final_results$CYP2D6_diplotype[i] <- "*4/*4"
+        }
+      }
+    }
+  }
 
   return(final_results)
 }

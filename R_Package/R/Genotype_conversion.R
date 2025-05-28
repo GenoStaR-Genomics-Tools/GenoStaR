@@ -1436,12 +1436,32 @@ star_to_pheno <- function(df, gene) {
     for (i in 1:nrow(activity_score1)) {
       score1 <- activity_score1[i, "CYP2D6_AS_1"]
       score2 <- activity_score2[i, "CYP2D6_AS_2"]
+      diplotype_val <- df[i, diplotype_col]
+
+      # Check for invalid or unmatched diplotype
+      if (diplotype_val %in% c("no matching star alleles found", NA, "", " ")) {
+        pheno_list_1[[i]] <- "Diplotype not found"
+        pheno_list_2[[i]] <- NA
+        comment_list[[i]] <- paste(comment_list[[i]], "No metabolizer status assigned due to unmatched diplotype", sep = "; ")
+        next
+      }
       
+      # Check if scores are numeric
+      if (!suppressWarnings(!is.na(as.numeric(score1)))) {
+        pheno_list_1[[i]] <- "Invalid activity score"
+        pheno_list_2[[i]] <- NA
+        comment_list[[i]] <- paste(comment_list[[i]], "Non-numeric activity score; no metabolizer status assigned", sep = "; ")
+        next
+      }
+      
+      #assign phenotype from activity score 1
+      score1 <- as.numeric(score1)
       pheno1 <- if (score1 >= 2.5) "Ultra Rapid" else if (score1 >= 1.25 && score1 <= 2.25) "Normal" else if (score1 >= 0.25 && score1 <= 1) "Intermediate" else if (score1 == 0) "Poor" else "Unknown"
       pheno_list_1[[i]] <- pheno1
       
       # Check if Activity_Score_2 exists and is not NA
       if (!is.na(score2) && score2 != "") {
+        score2 <- as.numeric(score2)
         pheno2 <- if (score2 >= 2.5) "Ultra Rapid" else if (score2 >= 1.25 && score2 <= 2.25) "Normal" else if (score2 >= 0.25 && score2 <= 1) "Intermediate" else if (score2 == 0) "Poor" else "Unknown"
         pheno_list_2[[i]] <- pheno2
         

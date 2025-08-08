@@ -11,7 +11,7 @@ install.packages("devtools")
 
 #Install GenoStaR from GitHub:
 
-devtools:: install_github(“GenoStaR-Genomics-Tools /GenoStaR”)
+devtools:: install_github(“GenoStaR-Genomics-Tools/GenoStaR”)
 
 # Usage 
 The package is easy to use. Most functions accept genotypes as a dataframe, with SNPs as column names and a list of genes for diplotype calling. The main function, all_geno_pheno(), generates diplotypes, metabolizer phenotypes, and activity scores. You can use functions individually, such as assign_diplotypes() for diplotypes only or star_to_pheno() for metabolizer phenotypes if diplotypes are already available. For CYP2D6, if copy number variant information is provided in the data, the package expects the column names to contain CNVx9 and CNVInt6. The phased parameter is used to mark if the input genotypes have been phased already (set to TRUE) or if they are in an unphased format (set to FALSE). Further function specific documentation is provided by running ?function_name(). 

@@ -1,0 +1,17 @@
+Package: GenoStaR
+Type: Package
+Title: Star Allele Diplotype Conversion from Genotype Data
+Version: 0.0.1.0
+Author: Alex Coulter <alexcoulterr@gmail.com>
+Maintainer: Alex Coulter <alexcoulterr@gmail.com>
+Depends: 
+    R (>= 2.10)
+LazyData: true
+RoxygenNote: 7.2.3
+Encoding: UTF-8
+Description: This package provides an efficient process to call diplotypes from genotypes based on allele definition tables provided by 
+  PharmGKB. You provide the genotypes in .csv format and genes of interest and package name will call diplotypes, activity scores and 
+  metabolizer phenotypes. In the case where an alternate diplotype is returned, activity scores and phenotypes are only based off the main diplotype call, 
+  the information is not applicable to the alternate diplotype. 
+References: PharmGKB, https://www.pharmgkb.org/
+License: GPL (>= 3)

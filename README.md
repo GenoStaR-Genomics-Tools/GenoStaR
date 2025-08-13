@@ -58,6 +58,7 @@ all_geno_pheno(sample_CYP2D6_genotypes[sample_CYP2D6_genotypes$LabID == 1,], "CY
 - Allele definition tables snapshot: 2025-08-13 (curated from PharmGKB)
 
 #to query version dates for the allele definition tables used 
+
 library(GenoStaR)
 
 load_bundled_snapshot()

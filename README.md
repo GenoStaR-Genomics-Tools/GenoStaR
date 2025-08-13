@@ -52,7 +52,13 @@ all_geno_pheno(sample_CYP2D6_genotypes[1,], "CYP2D6", phased = FALSE)
 
 all_geno_pheno(sample_CYP2D6_genotypes[sample_CYP2D6_genotypes$LabID == 1,], "CYP2D6", phased = FALSE)
 
+# Version information
+
+- Genostar package version: v1.0
+- Allele definition tables snapshot: 2025-08-13 (curated from PharmGKB)
+
 #to query version dates for the allele definition tables used 
+library(GenoStaR)
 
 load_bundled_snapshot()
 

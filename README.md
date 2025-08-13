@@ -52,8 +52,6 @@ all_geno_pheno(sample_CYP2D6_genotypes[1,], "CYP2D6", phased = FALSE)
 
 all_geno_pheno(sample_CYP2D6_genotypes[sample_CYP2D6_genotypes$LabID == 1,], "CYP2D6", phased = FALSE)
 
-# Contributing
-If any issues are found, please send an email to: alexcoulterr@gmail.com
 
 # Authors
 Alex Coulter, Arun Tiwari, Clement Zai

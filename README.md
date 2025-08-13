@@ -52,6 +52,12 @@ all_geno_pheno(sample_CYP2D6_genotypes[1,], "CYP2D6", phased = FALSE)
 
 all_geno_pheno(sample_CYP2D6_genotypes[sample_CYP2D6_genotypes$LabID == 1,], "CYP2D6", phased = FALSE)
 
+#to query version dates for the allele definition tables used 
+
+load_bundled_snapshot()
+
+current_snapshot_version()
+
 
 # Authors
 Alex Coulter, Arun Tiwari, Clement Zai

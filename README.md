@@ -2,7 +2,7 @@
 An R package to convert genotypes to diplotypes and provide activity scores and metabolizer phenotypes.
 
 # Package Overview
-This package provides an efficient process to call diplotypes from genotypes based on allele definition tables provided by PharmGKB. You provide the genotypes, from .csv format and read in as a dataframe, and genes of interest and GenoStaR will call diplotypes, activity scores and metabolizer phenotypes. In the case where an alternate diplotype is returned, activity scores and phenotypes are based off the main diplotype call, the information is not applicable to the alternate diplotype. 
+This package provides an efficient process to call diplotypes from genotypes based on allele definition tables provided by ClinPGx. You provide the genotypes, from .csv format and read in as a dataframe, and genes of interest and GenoStaR will call diplotypes, activity scores and metabolizer phenotypes. In the case where an alternate diplotype is returned, activity scores and phenotypes are based off the main diplotype call, the information is not applicable to the alternate diplotype. 
 
 # Installation Instructions
 #Ensure that devtools is installed:
@@ -55,7 +55,7 @@ all_geno_pheno(sample_CYP2D6_genotypes[sample_CYP2D6_genotypes$LabID == 1,], "CY
 # Version information
 
 - Genostar package version: v1.0
-- Allele definition tables snapshot: 2025-08-13 (curated from PharmGKB)
+- Allele definition tables snapshot: 2025-08-13 (curated from ClinPGx)
 
 #to query version dates for the allele definition tables used 
 

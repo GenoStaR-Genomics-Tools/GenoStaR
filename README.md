@@ -61,6 +61,8 @@ all_geno_pheno(sample_CYP2D6_genotypes[sample_CYP2D6_genotypes$LabID == 1,], "CY
 
 library(GenoStaR)
 
+#run this line once upon initial set up to get version information
+
 load_bundled_snapshot()
 
 current_snapshot_version()

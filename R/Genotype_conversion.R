@@ -1645,9 +1645,9 @@ adjust_diplotype <- function(final_results) {
         
         if ((rs1065852 %in% c("A G", "G A", "AG", "GA")) & (rs3892097 %in% c("C T", "T C", "CT", "TC"))) {
           final_results$CYP2D6_diplotype[i] <- "*1/*4"
-        } else if ((rs1065852 == "AA" | "A A") & (rs3892097 %in% c("CT", "TC", "C T", "T C"))) {
+        } else if ((rs1065852 == "AA" | rs1065852 == "A A") & (rs3892097 %in% c("CT", "TC", "C T", "T C"))) {
           final_results$CYP2D6_diplotype[i] <- "*4/*10"
-        } else if ((rs1065852 == "AA"|"A A") & (rs3892097 == "TT"| "T T")) {
+        } else if ((rs1065852 == "AA"|rs1065852 == "A A") & (rs3892097 == "TT"| rs3892097 == "T T")) {
           final_results$CYP2D6_diplotype[i] <- "*4/*4"
         }
       }

@@ -72,7 +72,7 @@ current_snapshot_version()
 Alex Coulter, Arun Tiwari, Clement Zai
 
 # References
-Coulter, A. J., Thamilselvan, M., Freeman, N., Kennedy, J. L., Zai, C. C., & Tiwari, A. K. (in press). GenoStaR: an R package for genotype to star allele conversion for major cytochrome P450 family of genes. Clinical Pharmacology & Therapeutics.
+Coulter, A. J., Thamilselvan, M., Kennedy, J. L., Zai, C. C., & Tiwari, A. K. (2026). GenoStaR: An R package for genotype to star allele conversion for major cytochrome P450 family of genes. Clinical pharmacology and therapeutics, 119(1), 74–79. https://doi.org/10.1002/cpt.70059
 
 M. Whirl-Carrillo1, R. Huddart1, L. Gong, K. Sangkuhl, C.F. Thorn, R. Whaley and T.E. Klein. "An evidence-based framework for evaluating pharmacogenomics knowledge for personalized medicine" Clinical Pharmacology & Therapeutics (2021) Sep;110(3):563-572. doi: 10.1002/cpt.2350. Epub 2021 Jul 22.
 
